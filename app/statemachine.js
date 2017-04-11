@@ -19,6 +19,7 @@ function CoreStateMachine(commandRouter) {
     this.volatileService="";
     this.volatileState={};
 	this.isVolatile = false;
+
     /**
      * This field tells the system if it is currenty running in consume mode
      * @type {boolean} true or false wether the system is in consume mode
@@ -48,8 +49,10 @@ function CoreStateMachine(commandRouter) {
 	this.resetVolumioState();
 }
 
-// Public Methods ---------------------------------------------------------------------------------------
-// Get the current state of the player
+/**
+ * -------------------------------------------- Public Methods --------------------------------------------
+ */
+
 CoreStateMachine.prototype.getState = function () {
     this.commandRouter.pushDebugConsoleMessage('[' + Date.now() + '] ' + 'CoreStateMachine::getState');
 
@@ -1020,7 +1023,7 @@ CoreStateMachine.prototype.play = function (index) {
 		{
 			if(self.currentPosition ==null || self.currentPosition===undefined)
 			{
-                this.commandRouter.pushDebugConsoleMessage("CURRENT POSITION NOT SET, RESETTING TO 0");
+                self.commandRouter.pushDebugConsoleMessage("CURRENT POSITION NOT SET, RESETTING TO 0");
 				self.currentPosition=0;
 			}
 
@@ -1259,9 +1262,10 @@ CoreStateMachine.prototype.removeQueueItem = function (nIndex) {
 	{
 		this.stop()
 			.then(function () {
-		if (this.currentPosition > 0) {
-			this.currentPosition--;
-		} });
+		         if (self.currentPosition > 0) {
+			         self.currentPosition--;
+		          }
+			});
 	}
 	else
     {
