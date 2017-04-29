@@ -53,7 +53,15 @@
     "PERSISTENT_QUEUE":"Persistent queue",
     "PERSISTENT_QUEUE_DOC":"If enabled the Playqueue will be retained post reboot, if disabled the play queue will be cleared at every system start",
     "HARDWARE":"Hardware",
-    "SOFTWARE":"Software"
+    "SOFTWARE":"Software",
+    "MPD_VOLUME":"MPD Clients Volume Control",
+    "MPD_VOLUME_DOC":"Allow MPD Clients to change Volume, this will negatively impact Volume change speed",
+    "RESAMPLING_ALG":"Resampling algorithm quality",
+    "RESAMPLING_ALG_DOC":"This setting allows to set the ideal Resampling algorithm quality. Higher quality requires greater computing power, therefore sound might stutter or pause on low power devices. If that's the case lower the quality until you get smooth playback",
+    "VERY_HIGH":"Very high",
+    "HIGH":"High",
+    "MEDIUM":"Medium",
+    "LOW":"Low"
   },
   "NETWORK": {
     "NETWORK_SETTINGS":"Network Settings",
