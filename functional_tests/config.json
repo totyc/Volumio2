@@ -1,0 +1,14 @@
+{
+  "volumioIP":"192.168.10.144",
+  "songs":[
+    "music-library/NAS/music/ACDC/Black Ice/01 Rock N Roll Train.mp3",
+    "music-library/NAS/music/Avenged Sevenfold/Avenged Sevenfold/City of Evil/Sidewinder.mp3",
+    "music-library/NAS/music/The Strumbellas/Hope/01 - Spirits.mp3"
+  ],
+  "seekTimes":
+          [
+            240,
+            390,
+            180
+          ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "functional_tests",
+  "version": "0.0.1",
+  "dependencies": {
+    "chai": "^3.5.0",
+    "fs-extra": "^3.0.0",
+    "kew": "^0.7.0",
+    "mocha": "^3.3.0",
+    "should": "^11.2.1",
+    "socket.io-client": "^1.7.3",
+    "standard": "^10.0.2"
+  }
+}
