@@ -103,7 +103,7 @@ describe("Standard playback", function () {
                 song.should.have.a.property("uri");
                 song.should.have.a.property("service");
                 song.should.have.a.property("name");
-                //song.should.have.a.property("artist");
+                song.should.have.a.property("artist");
                 song.should.have.a.property("album");
                 song.should.have.a.property("type");
                 song.should.have.a.property("tracknumber");
@@ -129,31 +129,6 @@ describe("Standard playback", function () {
 
     });
 
-   /* it("Setting modalities", function (done) {
-        var socket = io.connect(volumioURL);
-
-        socket.on('pushState', function (data) {
-            /*data.should.have.a.property('consume');
-
-            var consume=data.consume;
-            consume.should.be.exactly('false');
-
-            data.should.have.a.property('repeat');
-
-            var repeat=data.repeat;
-            repeat.should.be.exactly("false");*/
-
-          /*  socket.removeAllListeners("pushState");
-            socket.disconnect();
-            done();
-        });
-
-        socket.emit("setConsume",{"value":"false"});
-        //socket.emit("setRepeat",{"value":"false","repeatSingle":"false"});
-
-
-    });*/
-
     it("Play song", function (done) {
         var deferPos = 0;
         var defers = [];
@@ -167,7 +142,7 @@ describe("Standard playback", function () {
             data.should.have.property('status');
             data.should.have.property('position');
             data.should.have.property('title');
-            //data.should.have.property('artist');
+            data.should.have.property('artist');
             data.should.have.property('album');
             data.should.have.property('albumart');
             data.should.have.property('uri');
@@ -188,7 +163,7 @@ describe("Standard playback", function () {
         libQ.all(defers)
             .then(function () {
                 socket.removeAllListeners("pushState");
-                //socket.disconnect();
+                socket.disconnect();
                 done();
             });
 
@@ -335,6 +310,63 @@ describe("Standard playback with seeks", function () {
         });
 
     });
+
+
+});
+
+
+describe("Consume mode playback", function () {
+    this.timeout(1000000);
+
+    it("Clearing queue", function (done) {
+        var socket = io.connect(volumioURL);
+        socket.on('pushQueue', function (data) {
+            data.should.be.instanceOf(Array).and.have.lengthOf(0);
+            socket.removeAllListeners("pushQueue");
+            socket.disconnect();
+            done();
+        });
+
+        socket.emit("clearQueue");
+    });
+
+    it("Adding songs to queue", function (done) {
+        var socket = io.connect(volumioURL);
+        socket.on('pushQueue', function (data) {
+            socket.removeAllListeners("pushQueue");
+            socket.disconnect();
+            done();
+        });
+
+        var consumeurl = config.consumeURL;
+        socket.emit("addToQueue",{'service':'webradio', 'uri':consumeurl});
+
+
+    });
+
+    it("Play song", function (done) {
+        var socket = io.connect(volumioURL);
+
+        socket.on('pushState', function (data) {
+            if(data.title)
+            {
+                socket.emit("stop");
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+
+                data.should.have.property('consume').and.be.exactly(true);
+                data.should.have.property('volatile').and.be.exactly(false);
+                data.should.have.property('service').and.be.exactly("webradio");
+
+                setTimeout(function(){done()},2000);
+            }
+        });
+
+        socket.emit("play",{'value':0});
+
+    });
+
+
 
 
 });

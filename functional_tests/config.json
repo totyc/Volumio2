@@ -12,5 +12,6 @@
             15,
             20,
             8
-          ]
+          ],
+  "consumeURL":"http://shoutcast.rtl.it:3010/"
 }
