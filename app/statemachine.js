@@ -119,12 +119,12 @@ CoreStateMachine.prototype.getState = function () {
         random: false,
         repeat: false,
         repeatSingle: false,
-        consume: false,
+        consume: true,
         volume: this.currentVolume,
         mute: this.currentMute,
         stream: this.consumeState.stream,
         updatedb: false,
-        volatile: true,
+        volatile: false,
         trackType: this.consumeState.trackType,
         service: this.consumeState.service
       }
