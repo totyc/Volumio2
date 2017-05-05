@@ -65,10 +65,15 @@ describe("Pre checks", function () {
     });
 });
 
-
-
 describe("Standard playback", function () {
     this.timeout(1000000);
+
+
+    it("Configure playback modes", function () {
+        var socket = io.connect(volumioURL);
+        socket.emit("setRepeat",{value:false,repeatSingle:false});
+        socket.disconnect();
+    });
 
     it("Clearing queue", function (done) {
        var socket = io.connect(volumioURL);
@@ -191,8 +196,14 @@ describe("Standard playback", function () {
 });
 
 
-describe("Standard playback with seeks", function () {
+describe("Playback controls (Seek)", function () {
     this.timeout(1000000);
+
+    it("Configure playback modes", function () {
+        var socket = io.connect(volumioURL);
+        socket.emit("setRepeat",{value:false,repeatSingle:false});
+        socket.disconnect();
+    });
 
     it("Clearing queue", function (done) {
         var socket = io.connect(volumioURL);
@@ -315,8 +326,412 @@ describe("Standard playback with seeks", function () {
 });
 
 
+describe("Playback controls (Pause/Resume)", function () {
+    this.timeout(1000000);
+
+    it("Configure playback modes", function () {
+        var socket = io.connect(volumioURL);
+        socket.emit("setRepeat",{value:false,repeatSingle:false});
+        socket.disconnect();
+    });
+
+    it("Clearing queue", function (done) {
+        var socket = io.connect(volumioURL);
+        socket.on('pushQueue', function (data) {
+            data.should.be.instanceOf(Array).and.have.lengthOf(0);
+            socket.removeAllListeners("pushQueue");
+            socket.disconnect();
+            done();
+        });
+
+        socket.emit("clearQueue");
+        socket.emit("getQueue");
+
+    });
+
+    it("Adding songs to queue", function (done) {
+
+        var socket = io.connect(volumioURL);
+        socket.on('pushQueue', function (data) {
+            data.should.be.instanceOf(Array);
+            for(var i in data)
+            {
+                var song=data[i];
+                song.should.have.a.property("uri");
+                song.should.have.a.property("service");
+                song.should.have.a.property("name");
+                song.should.have.a.property("artist");
+                song.should.have.a.property("album");
+                song.should.have.a.property("type");
+                song.should.have.a.property("tracknumber");
+                song.should.have.a.property("albumart");
+                song.should.have.a.property("duration");
+                song.should.have.a.property("trackType");
+            }
+
+            socket.removeAllListeners("pushQueue");
+            socket.disconnect();
+            done();
+        });
+
+        var songUrl = config.songs[0];
+        socket.emit("addToQueue",{'service':'mpd', 'uri':songUrl});
+    });
+
+    it("Play song", function (done) {
+        var socket = io.connect(volumioURL);
+
+        socket.on('pushState', function (data) {
+            data.should.have.property('status');
+            data.should.have.property('position');
+            data.should.have.property('title');
+            data.should.have.property('artist');
+            data.should.have.property('album');
+            data.should.have.property('albumart');
+            data.should.have.property('uri');
+
+            var status=data.status;
+            if(status === 'play')
+            {
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+                setTimeout(function () {
+                    done();
+                },5000)
+            }
+        });
+
+        socket.emit("play",{'value':0});
+
+    });
+
+    it("Pause song", function (done) {
+        var socket = io.connect(volumioURL);
+
+        socket.on('pushState', function (data) {
+            data.should.have.property('status');
+            data.should.have.property('position');
+            data.should.have.property('title');
+            data.should.have.property('artist');
+            data.should.have.property('album');
+            data.should.have.property('albumart');
+            data.should.have.property('uri');
+
+            var status=data.status;
+            if(status === 'pause')
+            {
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+                setTimeout(function () {
+                    done();
+                },5000)
+            }
+        });
+
+        socket.emit("pause");
+
+    });
+
+    it("Resume song", function (done) {
+        var socket = io.connect(volumioURL);
+
+        var lastUpdatedDefer=0;
+        socket.on('pushState', function (data) {
+            data.should.have.property('status');
+            data.should.have.property('position');
+            data.should.have.property('title');
+            data.should.have.property('artist');
+            data.should.have.property('album');
+            data.should.have.property('albumart');
+            data.should.have.property('uri');
+
+            var status=data.status;
+            if(status === 'play')
+            {
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+                done();
+            }
+        });
+
+        socket.emit("play");
+
+    });
+
+
+    it("Checking that Volumio stopped", function (done) {
+
+        var socket = io.connect(volumioURL);
+        socket.on('pushState', function (data) {
+            data.should.have.property('status');
+            var status=data.status;
+
+            if(status === 'stop') {
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+                done();
+            }
+        });
+
+    });
+
+
+});
+
+
+describe("Playback controls (Skip)", function () {
+    this.timeout(1000000);
+
+    it("Configure playback modes", function () {
+        var socket = io.connect(volumioURL);
+        socket.emit("setRepeat",{value:false,repeatSingle:false});
+        socket.disconnect();
+    });
+
+    it("Clearing queue", function (done) {
+        var socket = io.connect(volumioURL);
+        socket.on('pushQueue', function (data) {
+            data.should.be.instanceOf(Array).and.have.lengthOf(0);
+            socket.removeAllListeners("pushQueue");
+            socket.disconnect();
+            done();
+        });
+
+        socket.emit("clearQueue");
+        socket.emit("getQueue");
+
+    });
+
+    it("Adding songs to queue", function (done) {
+        var deferPos = 0;
+        var defers = [];
+        for (var i in config.songs) {
+            defers.push(libQ.defer());
+        }
+
+        var socket = io.connect(volumioURL);
+        socket.on('pushQueue', function (data) {
+            var pos = deferPos;
+            deferPos++;
+
+            data.should.be.instanceOf(Array);
+            for(var i in data)
+            {
+                var song=data[i];
+                song.should.have.a.property("uri");
+                song.should.have.a.property("service");
+                song.should.have.a.property("name");
+                song.should.have.a.property("artist");
+                song.should.have.a.property("album");
+                song.should.have.a.property("type");
+                song.should.have.a.property("tracknumber");
+                song.should.have.a.property("albumart");
+                song.should.have.a.property("duration");
+                song.should.have.a.property("trackType");
+            }
+
+            defers[pos].resolve();
+        });
+
+        libQ.all(defers)
+            .then(function () {
+                socket.removeAllListeners("pushQueue");
+                socket.disconnect();
+                done();
+            });
+
+        for (var i in config.songs) {
+            var songUrl = config.songs[i];
+            socket.emit("addToQueue",{'service':'mpd', 'uri':songUrl});
+        }
+
+    });
+
+    it("Play song", function (done) {
+        var deferPos = 0;
+        var defers = [];
+        for (var i in config.songs) {
+            defers.push(libQ.defer());
+        }
+        var socket = io.connect(volumioURL);
+
+        var lastUpdatedDefer=0;
+        socket.on('pushState', function (data) {
+            data.should.have.property('status');
+            data.should.have.property('position');
+            data.should.have.property('title');
+            data.should.have.property('artist');
+            data.should.have.property('album');
+            data.should.have.property('albumart');
+            data.should.have.property('uri');
+
+            var status=data.status;
+            if(status === 'play')
+            {
+                var position=data.position;
+                if(position === lastUpdatedDefer)
+                {
+                    lastUpdatedDefer=position;
+                    defers[position].resolve();
+                    lastUpdatedDefer++;
+
+                    if(position<(config.songs.length-1))
+                    {
+                        setTimeout(function () {
+                            socket.emit("next");
+                        },3000)
+                    }
+                }
+            }
+        });
+
+        libQ.all(defers)
+            .then(function () {
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+                done();
+            });
+
+        socket.emit("play",{'value':0});
+
+    });
+
+    it("Checking that Volumio stopped", function (done) {
+
+        var socket = io.connect(volumioURL);
+        socket.on('pushState', function (data) {
+            data.should.have.property('status');
+            var status=data.status;
+
+            if(status === 'stop') {
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+                done();
+            }
+        });
+
+    });
+
+
+});
+
+describe("Playback controls (Repeat)", function () {
+    this.timeout(1000000);
+
+    it("Clearing queue", function (done) {
+        var socket = io.connect(volumioURL);
+        socket.on('pushQueue', function (data) {
+            data.should.be.instanceOf(Array).and.have.lengthOf(0);
+            socket.removeAllListeners("pushQueue");
+            socket.disconnect();
+            done();
+        });
+
+        socket.emit("clearQueue");
+        socket.emit("getQueue");
+
+    });
+
+    it("Adding songs to queue", function (done) {
+        var deferPos = 0;
+        var defers = [];
+        for (var i in config.songs) {
+            defers.push(libQ.defer());
+        }
+
+        var socket = io.connect(volumioURL);
+        socket.on('pushQueue', function (data) {
+            var pos = deferPos;
+            deferPos++;
+
+            data.should.be.instanceOf(Array);
+            for(var i in data)
+            {
+                var song=data[i];
+                song.should.have.a.property("uri");
+                song.should.have.a.property("service");
+                song.should.have.a.property("name");
+                song.should.have.a.property("artist");
+                song.should.have.a.property("album");
+                song.should.have.a.property("type");
+                song.should.have.a.property("tracknumber");
+                song.should.have.a.property("albumart");
+                song.should.have.a.property("duration");
+                song.should.have.a.property("trackType");
+            }
+
+            defers[pos].resolve();
+        });
+
+        libQ.all(defers)
+            .then(function () {
+                socket.removeAllListeners("pushQueue");
+                socket.disconnect();
+                done();
+            });
+
+        for (var i in config.songs) {
+            var songUrl = config.songs[i];
+            socket.emit("addToQueue",{'service':'mpd', 'uri':songUrl});
+        }
+
+    });
+
+    it("Play song", function (done) {
+
+        var socket = io.connect(volumioURL);
+
+        var seek=0;
+        var repeated=0;
+
+        socket.on('pushState', function (data) {
+            data.should.have.property('status');
+            data.should.have.property('position');
+            data.should.have.property('title');
+            data.should.have.property('artist');
+            data.should.have.property('album');
+            data.should.have.property('albumart');
+            data.should.have.property('uri');
+
+            var status=data.status;
+            if(status === 'play')
+            {
+                if(data.seek<seek)
+                {
+                    if(repeated === 2)
+                    {
+                        socket.emit("stop");
+
+                        socket.removeAllListeners("pushState");
+                        socket.disconnect();
+                        done();
+                    }
+                    else
+                    {
+                        repeated++;
+                        seek=data.seek;
+                    }
+                } else {
+                    seek=data.seek;
+                }
+            }
+        });
+        socket.emit("setRepeat",{value:true,repeatSingle:true});
+        socket.emit("play",{'value':1});
+
+    });
+
+});
+
+
 describe("Consume mode playback", function () {
     this.timeout(1000000);
+
+    it("Configure playback modes", function () {
+        var socket = io.connect(volumioURL);
+        socket.emit("setRepeat",{value:false,repeatSingle:false});
+        socket.disconnect();
+    });
 
     it("Clearing queue", function (done) {
         var socket = io.connect(volumioURL);
@@ -365,8 +780,5 @@ describe("Consume mode playback", function () {
         socket.emit("play",{'value':0});
 
     });
-
-
-
 
 });
