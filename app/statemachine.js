@@ -2,7 +2,6 @@
 
 var libQ = require('kew')
 
-// Define the CoreStateMachine class
 module.exports = CoreStateMachine
 function CoreStateMachine (commandRouter) {
   this.unmanagedMode = false
@@ -95,9 +94,9 @@ CoreStateMachine.prototype.getState = function () {
       service: this.volatileState.service
     }
   } else if (this.isConsume) {
-  // checking consumeState or the below code will throw an exception
+    // checking consumeState or the below code will throw an exception
     if (this.consumeState) {
-  // we identify a webradio stream from its duration which is zero
+      // we identify a webradio stream from its duration which is zero
       if (this.consumeState.duration === '0') {
         this.consumeState.stream = true
         this.consumeState.service = 'webradio'
@@ -207,8 +206,6 @@ CoreStateMachine.prototype.getQueue = function () {
   this.commandRouter.pushConsoleMessage('[' + Date.now() + '] ' + 'CoreStateMachine::getQueue')
   return this.playQueue.getQueue()
 }
-
-// Remove one item from the queue
 
 // Add array of items to queue
 CoreStateMachine.prototype.addQueueItems = function (arrayItems) {
