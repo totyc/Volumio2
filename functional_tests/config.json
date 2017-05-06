@@ -13,5 +13,5 @@
             20,
             8
           ],
-  "consumeURL":"http://178.33.45.230:80/stream"
+  "consumeURL":"http://www.rds.it:8000/stream"
 }

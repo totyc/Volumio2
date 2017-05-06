@@ -68,13 +68,6 @@ describe("Pre checks", function () {
 describe("Standard playback", function () {
     this.timeout(1000000);
 
-
-    it("Configure playback modes", function () {
-        var socket = io.connect(volumioURL);
-        socket.emit("setRepeat",{value:false,repeatSingle:false});
-        socket.disconnect();
-    });
-
     it("Clearing queue", function (done) {
        var socket = io.connect(volumioURL);
        socket.on('pushQueue', function (data) {
@@ -199,12 +192,6 @@ describe("Standard playback", function () {
 describe("Playback controls (Seek)", function () {
     this.timeout(1000000);
 
-    it("Configure playback modes", function () {
-        var socket = io.connect(volumioURL);
-        socket.emit("setRepeat",{value:false,repeatSingle:false});
-        socket.disconnect();
-    });
-
     it("Clearing queue", function (done) {
         var socket = io.connect(volumioURL);
         socket.on('pushQueue', function (data) {
@@ -328,12 +315,6 @@ describe("Playback controls (Seek)", function () {
 
 describe("Playback controls (Pause/Resume)", function () {
     this.timeout(1000000);
-
-    it("Configure playback modes", function () {
-        var socket = io.connect(volumioURL);
-        socket.emit("setRepeat",{value:false,repeatSingle:false});
-        socket.disconnect();
-    });
 
     it("Clearing queue", function (done) {
         var socket = io.connect(volumioURL);
@@ -482,12 +463,6 @@ describe("Playback controls (Pause/Resume)", function () {
 describe("Playback controls (Skip)", function () {
     this.timeout(1000000);
 
-    it("Configure playback modes", function () {
-        var socket = io.connect(volumioURL);
-        socket.emit("setRepeat",{value:false,repeatSingle:false});
-        socket.disconnect();
-    });
-
     it("Clearing queue", function (done) {
         var socket = io.connect(volumioURL);
         socket.on('pushQueue', function (data) {
@@ -621,10 +596,14 @@ describe("Playback controls (Repeat)", function () {
     it("Clearing queue", function (done) {
         var socket = io.connect(volumioURL);
         socket.on('pushQueue', function (data) {
-            data.should.be.instanceOf(Array).and.have.lengthOf(0);
-            socket.removeAllListeners("pushQueue");
-            socket.disconnect();
-            done();
+            data.should.be.instanceOf(Array);
+
+            if(data.length === 0)
+            {
+                socket.removeAllListeners("pushQueue");
+                socket.disconnect();
+                done();
+            }
         });
 
         socket.emit("clearQueue");
@@ -696,9 +675,10 @@ describe("Playback controls (Repeat)", function () {
             var status=data.status;
             if(status === 'play')
             {
+                data.should.have.property('position').and.be.exactly(1);
                 if(data.seek<seek)
                 {
-                    if(repeated === 2)
+                    if(repeated === 1)
                     {
                         socket.emit("stop");
 
@@ -721,17 +701,31 @@ describe("Playback controls (Repeat)", function () {
 
     });
 
+    it("Reset status", function (done) {
+
+        var socket = io.connect(volumioURL);
+
+        socket.on('pushState', function (data) {
+            data.should.have.property('repeat');
+            data.should.have.property('repeatSingle');
+
+            if(data.repeat === false && data.repeatSingle === false)
+            {
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+                done();
+            }
+
+        });
+        socket.emit("setRepeat",{'value':false,'repeatSingle':false});
+
+    });
+
 });
 
 
 describe("Consume mode playback", function () {
     this.timeout(1000000);
-
-    it("Configure playback modes", function () {
-        var socket = io.connect(volumioURL);
-        socket.emit("setRepeat",{value:false,repeatSingle:false});
-        socket.disconnect();
-    });
 
     it("Clearing queue", function (done) {
         var socket = io.connect(volumioURL);
@@ -763,21 +757,31 @@ describe("Consume mode playback", function () {
         var socket = io.connect(volumioURL);
 
         socket.on('pushState', function (data) {
-            if(data.title)
+            if(data.status === 'play' && data.service === 'webradio')
             {
-                socket.emit("stop");
-                socket.removeAllListeners("pushState");
-                socket.disconnect();
-
                 data.should.have.property('consume').and.be.exactly(true);
                 data.should.have.property('volatile').and.be.exactly(false);
-                data.should.have.property('service').and.be.exactly("webradio");
 
-                setTimeout(function(){done()},2000);
+                socket.removeAllListeners("pushState");
+                socket.disconnect();
+                done();
             }
         });
 
         socket.emit("play",{'value':0});
+
+    });
+
+    it("Stop song", function (done) {
+        var socket = io.connect(volumioURL);
+
+        socket.emit("stop",{});
+
+        setTimeout(function () {
+            socket.disconnect();
+            done();
+        },2000);
+
 
     });
 
