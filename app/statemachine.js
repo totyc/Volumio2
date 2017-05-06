@@ -35,7 +35,7 @@ function CoreStateMachine (commandRouter) {
      * This variable contains the service to handle when in consume mode. Commented because default value is undefined.
      * Keeping for documentation purposes
      */
-  // this.consumeUpdateService
+  this.consumeUpdateService
 
   /**
   *This field tells the system if it is currenty running in consume mode, but no metadata should be retrieved
@@ -97,7 +97,8 @@ CoreStateMachine.prototype.getState = function () {
     // checking consumeState or the below code will throw an exception
     if (this.consumeState) {
       // we identify a webradio stream from its duration which is zero
-      if (this.consumeState.duration === '0') {
+
+      if (this.consumeState.duration === 0) {
         this.consumeState.stream = true
         this.consumeState.service = 'webradio'
         this.consumeState.trackType = 'webradio'
